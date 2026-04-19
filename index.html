@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CT비 선정 계산기</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result-card {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-left: 5px solid #3498db;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+        .result-title {
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #bdc3c7;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>전원품질분석 CT비 선정 계산기</h2>
+    
+    <div class="input-group">
+        <label for="capacity">변압기 용량 (kVA)</label>
+        <input type="number" id="capacity" value="1500" step="100">
+    </div>
+
+    <div class="input-group">
+        <label for="voltage1">1차측 고압 전압 (V)</label>
+        <input type="number" id="voltage1" value="6600" step="100">
+    </div>
+
+    <div class="input-group">
+        <label for="voltage2">2차측 저압 전압 (V)</label>
+        <input type="number" id="voltage2" value="380" step="10">
+    </div>
+
+    <div class="input-group">
+        <label for="margin">CT 여유율</label>
+        <input type="number" id="margin" value="1.25" step="0.05">
+    </div>
+
+    <button onclick="calculateCT()">계산하기</button>
+
+    <div id="results" style="display:none;">
+        <div class="result-card">
+            <div class="result-title">고압반 (1차측) 분석 결과</div>
+            <div class="result-item">
+                <span>정격 전류:</span>
+                <span id="res-i1">0 A</span>
+            </div>
+            <div class="result-item">
+                <span>CT 1차 선정 기준 (정격 × 여유율):</span>
+                <span id="res-ct1" class="highlight">0 A</span>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <div class="result-title">저압반 (2차측) 분석 결과</div>
+            <div class="result-item">
+                <span>정격 전류:</span>
+                <span id="res-i2">0 A</span>
+            </div>
+            <div class="result-item">
+                <span>CT 1차 선정 기준 (정격 × 여유율):</span>
+                <span id="res-ct2" class="highlight">0 A</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculateCT() {
+        const capacity = parseFloat(document.getElementById('capacity').value); // kVA
+        const vol1 = parseFloat(document.getElementById('voltage1').value); // V
+        const vol2 = parseFloat(document.getElementById('voltage2').value); // V
+        const margin = parseFloat(document.getElementById('margin').value);
+
+        if(!capacity || !vol1 || !vol2 || !margin) {
+            alert("모든 값을 올바르게 입력해주세요.");
+            return;
+        }
+
+        const sqrt3 = 1.7320508;
+
+        // 고압측 계산 (V 단위를 kV로 변환하여 계산하거나, kVA를 VA로 변환하여 계산)
+        // I = (kVA * 1000) / (sqrt(3) * V)
+        const current1 = (capacity * 1000) / (sqrt3 * vol1);
+        const ct1 = current1 * margin;
+
+        // 저압측 계산
+        const current2 = (capacity * 1000) / (sqrt3 * vol2);
+        const ct2 = current2 * margin;
+
+        // 결과 화면에 출력
+        document.getElementById('res-i1').textContent = current1.toFixed(2) + ' A';
+        document.getElementById('res-ct1').textContent = ct1.toFixed(2) + ' A';
+        
+        document.getElementById('res-i2').textContent = current2.toFixed(2) + ' A';
+        document.getElementById('res-ct2').textContent = ct2.toFixed(2) + ' A';
+
+        document.getElementById('results').style.display = 'block';
+    }
+
+    // 페이지 로드 시 초기값으로 한번 계산 수행
+    window.onload = calculateCT;
+</script>
+
+</body>
+</html>
